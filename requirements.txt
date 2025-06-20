@@ -6,3 +6,5 @@ Pillow
 python-multipart
 aiogram>=2.25.2
 aiohttp>=3.8.4
+sqlalchemy>=2.0.0
+aiosqlite

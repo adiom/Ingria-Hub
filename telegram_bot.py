@@ -5,11 +5,22 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from db import Base, User
 
 load_dotenv()
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_API_KEY")
 API_URL = os.getenv("INGRIA_API_URL", "http://localhost:31337/ask_ingria")
+
+DATABASE_URL = "sqlite:///ingria.db"
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base.metadata.create_all(bind=engine)
 
 bot = Bot(token=TELEGRAM_TOKEN)
 dp = Dispatcher()
@@ -23,6 +34,23 @@ async def handle_message(message: Message):
     print(f"[TG] Получено сообщение: {message}")
     data = {}
     files = {}
+    # Сохраняем пользователя в БД (если его ещё нет)
+    db = SessionLocal()
+    try:
+        tg_id = str(message.from_user.id)
+        username = message.from_user.username
+        user = db.query(User).filter_by(telegram_id=tg_id).first()
+        if not user:
+            user = User(telegram_id=tg_id, username=username)
+            db.add(user)
+            db.commit()
+        user_id = user.id
+    finally:
+        db.close()
+    # Добавляем user_id и username в form-data
+    data['user_id'] = str(user_id)
+    data['username'] = username or ''
+    # Caption или текст
     if message.caption:
         data['prompt'] = message.caption
         print(f"[TG] Caption: {message.caption}")
