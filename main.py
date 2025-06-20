@@ -3,7 +3,10 @@
 import os
 import io
 from typing import Optional
-
+import tempfile # Импортируем для создания временных файлов
+import shutil # Импортируем для копирования потока в файл
+import time
+import asyncio
 # Импортируем библиотеки
 import uvicorn
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException, WebSocket
@@ -52,26 +55,28 @@ ingr_model = genai.GenerativeModel(
 async def ask_ingria_endpoint(
     prompt: Optional[str] = Form(None),
     image_file: Optional[UploadFile] = File(None),
-    audio_file: Optional[UploadFile] = File(None)
+    audio_file: Optional[UploadFile] = File(None),
+    video_file: Optional[UploadFile] = File(None)
 ):
-    # Начинаем с пустого списка, т.к. системная инструкция уже в модели
     contents = []
     
     print(f"[Ingria] prompt: {prompt}")
     print(f"[Ingria] image_file: {image_file.filename if image_file else 'None'}")
     print(f"[Ingria] audio_file: {audio_file.filename if audio_file else 'None'}")
+    print(f"[Ingria] video_file: {video_file.filename if video_file else 'None'}")
 
-    if not prompt and not image_file and not audio_file:
+    if not prompt and not image_file and not audio_file and not video_file:
         raise HTTPException(
             status_code=400,
-            detail="Нужно предоставить хотя бы один из параметров: 'prompt', 'image_file' или 'audio_file'."
+            detail="Нужно предоставить хотя бы один из параметров."
         )
+
+    temp_video_path = None
+    uploaded_file_to_delete = None # Переменная для хранения имени файла для удаления из Gemini API
+
     try:
-        # Добавляем текст, если он есть
         if prompt:
             contents.append(prompt)
-
-        # Добавляем изображение, если оно есть
         if image_file:
             if not image_file.content_type.startswith("image/"):
                 raise HTTPException(status_code=400, detail="Файл 'image_file' должен быть изображением.")
@@ -80,25 +85,74 @@ async def ask_ingria_endpoint(
             contents.append(img)
             print(f"Добавлено изображение: {image_file.filename}")
 
-        # Добавляем аудио, если оно есть
+        if video_file:
+            if not video_file.content_type.startswith("video/"):
+                raise HTTPException(status_code=400, detail="Файл 'video_file' должен быть видеофайлом.")
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f"_{video_file.filename}") as temp_video:
+                temp_video_path = temp_video.name
+                shutil.copyfileobj(video_file.file, temp_video)
+            
+            print(f"Видеофайл временно сохранен: {temp_video_path}")
+            print("Загрузка видеофайла на серверы Google...")
+            
+            gemini_video_file = genai.upload_file(path=temp_video_path)
+            uploaded_file_to_delete = gemini_video_file.name # Сохраняем имя для последующего удаления
+            
+            print(f"Видеофайл загружен, id: {gemini_video_file.name}")
+            
+            # --- ИСПРАВЛЕННЫЙ БЛОК ПРОВЕРКИ СТАТУСА ---
+            print("Ожидание обработки файла...")
+            timeout_seconds = 60 # Увеличим таймаут на всякий случай
+            for i in range(timeout_seconds * 2): # Проверяем каждые 0.5 секунды
+                file_info = genai.get_file(gemini_video_file.name)
+                
+                # ИСПРАВЛЕНИЕ 1: Выводим имя состояния, а не его числовое значение
+                print(f"Попытка {i+1}: Статус файла - {file_info.state.name}")
+                
+                # ИСПРАВЛЕНИЕ 2: Сравниваем имя состояния со строкой "ACTIVE"
+                if file_info.state.name == "ACTIVE":
+                    contents.append(file_info) # Добавляем объект файла в контент
+                    print("Файл успешно обработан и готов к использованию.")
+                    break
+                
+                # Если файл не обработался, но уже в состоянии ошибки
+                if file_info.state.name == "FAILED":
+                    raise Exception(f"Ошибка обработки файла на стороне Google: {file_info.state_reason}")
+
+                # ИСПРАВЛЕНИЕ 3: Используем asyncio.sleep в async функции
+                await asyncio.sleep(0.5)
+            else: # Этот else относится к циклу for. Он сработает, если break не был вызван.
+                raise Exception(f"Файл не стал ACTIVE за {timeout_seconds} секунд.")
+            # --- КОНЕЦ ИСПРАВЛЕННОГО БЛОКА ---
+
         if audio_file:
             if not audio_file.content_type.startswith("audio/"):
                 raise HTTPException(status_code=400, detail="Файл 'audio_file' должен быть аудиофайлом.")
             audio_bytes = await audio_file.read()
-            
-            # *** ИСПРАВЛЕНИЕ 2: Правильная передача аудиофайла ***
             audio_part = {"mime_type": audio_file.content_type, "data": audio_bytes}
             contents.append(audio_part)
             print(f"Добавлено аудио: {audio_file.filename}")
 
-        # --- Отправка запроса в Ingria через SDK ---
         print("Отправка запроса в Ingria (SDK)...")
         response = ingr_model.generate_content(contents)
         print("Ответ от Ingria получен.")
+        
         return {"response": response.text}
+
     except Exception as e:
         print(f"Произошла ошибка: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        # Удаляем временный файл с диска
+        if temp_video_path and os.path.exists(temp_video_path):
+            os.remove(temp_video_path)
+            print(f"Временный видеофайл удален: {temp_video_path}")
+        
+        # Удаляем файл с серверов Google, чтобы не занимать место
+        if uploaded_file_to_delete:
+            print(f"Удаление файла с серверов Google: {uploaded_file_to_delete}")
+            genai.delete_file(name=uploaded_file_to_delete)
+
 
 @app.get("/")
 def read_root():

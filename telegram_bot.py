@@ -58,6 +58,25 @@ async def handle_message(message: Message):
                 audio_bytes = await resp.read()
                 mime = message.audio.mime_type or 'audio/mpeg'
                 files['audio_file'] = ('audio.mp3', audio_bytes, mime)
+    if message.video:
+        file = await bot.get_file(message.video.file_id)
+        file_path = file.file_path
+        file_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_path}"
+        print(f"[TG] Видео: {file_url}")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(file_url) as resp:
+                video_bytes = await resp.read()
+                mime = message.video.mime_type or 'video/mp4'
+                files['video_file'] = ('video.mp4', video_bytes, mime)
+    if message.video_note:
+        file = await bot.get_file(message.video_note.file_id)
+        file_path = file.file_path
+        file_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_path}"
+        print(f"[TG] Видеосообщение: {file_url}")
+        async with aiohttp.ClientSession() as session:
+            async with session.get(file_url) as resp:
+                video_bytes = await resp.read()
+                files['video_file'] = ('video_note.mp4', video_bytes, 'video/mp4')
     if not data and not files:
         await message.answer("Пришлите текст, фото или аудио.")
         print("[TG] Нет данных для отправки в endpoint")
