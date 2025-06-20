@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+google-generativeai
+Pillow
+python-multipart
+aiogram>=2.25.2
+aiohttp>=3.8.4
