@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Воспоминания Ингрии</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filter-select {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .memories-container {
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .memory-card {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .memory-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .memory-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .memory-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .memory-type {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .memory-text {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .memory-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+
+        .importance-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .importance-stars {
+            color: #ffc107;
+        }
+
+        .emotions-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                min-width: auto;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Воспоминания Ингрии</h1>
+            <p>Цифровая память нашей юной подруги</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-memories">-</div>
+                <div class="stat-label">Всего воспоминаний</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="recent-memories">-</div>
+                <div class="stat-label">За последнюю неделю</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="avg-importance">-</div>
+                <div class="stat-label">Средняя важность</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Поиск по воспоминаниям...">
+            </div>
+            <select class="filter-select" id="type-filter">
+                <option value="">Все типы</option>
+                <option value="video">Видео</option>
+                <option value="image">Изображения</option>
+                <option value="audio">Аудио</option>
+                <option value="conversation">Разговоры</option>
+            </select>
+            <button class="btn btn-primary" onclick="loadMemories()">Обновить</button>
+            <button class="btn btn-secondary" onclick="loadStats()">Статистика</button>
+        </div>
+
+        <div class="memories-container" id="memories-container">
+            <div class="loading">Загрузка воспоминаний...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentMemories = [];
+        let searchTimeout;
+
+        // Загрузка статистики
+        async function loadStats() {
+            try {
+                const response = await fetch('/memories/stats');
+                const stats = await response.json();
+                
+                document.getElementById('total-memories').textContent = stats.total_memories;
+                document.getElementById('recent-memories').textContent = stats.recent_memories;
+                document.getElementById('avg-importance').textContent = stats.average_importance;
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Загрузка воспоминаний
+        async function loadMemories() {
+            const container = document.getElementById('memories-container');
+            container.innerHTML = '<div class="loading">Загрузка воспоминаний...</div>';
+
+            try {
+                const typeFilter = document.getElementById('type-filter').value;
+                const searchQuery = document.getElementById('search-input').value;
+                
+                let url = '/memories?limit=50';
+                if (typeFilter) url += `&memory_type=${typeFilter}`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                currentMemories = data.memories;
+                
+                if (searchQuery) {
+                    const searchResponse = await fetch(`/memories/search?q=${encodeURIComponent(searchQuery)}&limit=50`);
+                    const searchData = await searchResponse.json();
+                    currentMemories = searchData.memories;
+                }
+                
+                displayMemories(currentMemories);
+            } catch (error) {
+                console.error('Ошибка загрузки воспоминаний:', error);
+                container.innerHTML = '<div class="error">Ошибка загрузки воспоминаний</div>';
+            }
+        }
+
+        // Отображение воспоминаний
+        function displayMemories(memories) {
+            const container = document.getElementById('memories-container');
+            
+            if (memories.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>Воспоминаний пока нет</h3>
+                        <p>Ингрия еще не накопила воспоминаний. Начните с ней общаться!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const memoriesHtml = memories.map(memory => {
+                const date = new Date(memory.created_at).toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const stars = '⭐'.repeat(memory.importance_score);
+                
+                return `
+                    <div class="memory-card">
+                        <div class="memory-header">
+                            <div class="memory-date">${date}</div>
+                            <div class="memory-type">${memory.memory_type || 'неизвестно'}</div>
+                        </div>
+                        <div class="memory-text">${memory.memory_text}</div>
+                        <div class="memory-meta">
+                            <div class="importance-badge">
+                                <span>Важность:</span>
+                                <span class="importance-stars">${stars}</span>
+                            </div>
+                            ${memory.emotions ? `<div class="emotions-tag">${memory.emotions}</div>` : ''}
+                            <div>Обращений: ${memory.access_count || 0}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = memoriesHtml;
+        }
+
+        // Поиск с задержкой
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                loadMemories();
+            }, 500);
+        });
+
+        // Фильтр по типу
+        document.getElementById('type-filter').addEventListener('change', loadMemories);
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadMemories();
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Блокчейн памяти Ингрии</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .blockchain-container {
+            padding: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .block {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        .block:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .block-id {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .block-date {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+
+        .block-content {
+            margin-bottom: 15px;
+        }
+
+        .block-text {
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .block-hashes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8em;
+        }
+
+        .hash-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .hash-label {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .hash-value {
+            color: #6c757d;
+            word-break: break-all;
+        }
+
+        .chain-line {
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            width: 2px;
+            height: 10px;
+            background: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .block-hashes {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔗 Блокчейн памяти Ингрии</h1>
+            <p>Защита целостности цифровых воспоминаний</p>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-blocks">-</div>
+                <div class="stat-label">Всего блоков</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="chain-status">-</div>
+                <div class="stat-label">Статус цепочки</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="corrupted-blocks">-</div>
+                <div class="stat-label">Поврежденных блоков</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="last-hash">-</div>
+                <div class="stat-label">Последний хеш</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="loadBlockchain()">Обновить</button>
+            <button class="btn btn-success" onclick="verifyChain()">Проверить целостность</button>
+            <button class="btn btn-warning" onclick="repairChain()">Восстановить</button>
+        </div>
+
+        <div class="blockchain-container" id="blockchain-container">
+            <div class="loading">Загрузка блокчейна...</div>
+        </div>
+    </div>
+
+    <script>
+        let currentBlocks = [];
+
+        // Загрузка статистики блокчейна
+        async function loadBlockchainStats() {
+            try {
+                const response = await fetch('/blockchain/info');
+                const info = await response.json();
+                
+                document.getElementById('total-blocks').textContent = info.total_blocks;
+                document.getElementById('chain-status').textContent = info.chain_valid ? '✅ Валидна' : '❌ Повреждена';
+                document.getElementById('corrupted-blocks').textContent = info.corrupted_blocks;
+                document.getElementById('last-hash').textContent = info.last_block_hash ? info.last_block_hash.substring(0, 8) + '...' : 'Нет';
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        // Загрузка блокчейна
+        async function loadBlockchain() {
+            const container = document.getElementById('blockchain-container');
+            container.innerHTML = '<div class="loading">Загрузка блокчейна...</div>';
+
+            try {
+                const response = await fetch('/memories?limit=20');
+                const data = await response.json();
+                
+                currentBlocks = data.memories;
+                displayBlockchain(currentBlocks);
+                loadBlockchainStats();
+            } catch (error) {
+                console.error('Ошибка загрузки блокчейна:', error);
+                container.innerHTML = '<div class="error">Ошибка загрузки блокчейна</div>';
+            }
+        }
+
+        // Отображение блокчейна
+        function displayBlockchain(blocks) {
+            const container = document.getElementById('blockchain-container');
+            
+            if (blocks.length === 0) {
+                container.innerHTML = '<div class="loading">Блокчейн пуст</div>';
+                return;
+            }
+
+            const blocksHtml = blocks.map((block, index) => {
+                const date = new Date(block.created_at).toLocaleString('ru-RU');
+                
+                return `
+                    <div class="block">
+                        <div class="block-header">
+                            <div class="block-id">Блок #${block.id}</div>
+                            <div class="block-date">${date}</div>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-text">${block.memory_text}</div>
+                            <div class="block-hashes">
+                                <div class="hash-item">
+                                    <div class="hash-label">Хеш блока:</div>
+                                    <div class="hash-value">${block.hash || 'Нет хеша'}</div>
+                                </div>
+                                <div class="hash-item">
+                                    <div class="hash-label">Предыдущий хеш:</div>
+                                    <div class="hash-value">${block.previous_hash || 'Genesis'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${index < blocks.length - 1 ? '<div class="chain-line"></div>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = blocksHtml;
+        }
+
+        // Проверка целостности
+        async function verifyChain() {
+            try {
+                const response = await fetch('/blockchain/verify');
+                const result = await response.json();
+                
+                const message = result.valid ? 
+                    `<div class="success">✅ ${result.message}</div>` :
+                    `<div class="error">❌ ${result.message}</div>`;
+                
+                document.getElementById('blockchain-container').insertAdjacentHTML('afterbegin', message);
+                
+                // Обновляем статистику
+                loadBlockchainStats();
+            } catch (error) {
+                console.error('Ошибка проверки целостности:', error);
+            }
+        }
+
+        // Восстановление цепочки
+        async function repairChain() {
+            try {
+                const response = await fetch('/blockchain/repair', { method: 'POST' });
+                const result = await response.json();
+                
+                const message = `<div class="success">🔧 ${result.message}</div>`;
+                document.getElementById('blockchain-container').insertAdjacentHTML('afterbegin', message);
+                
+                // Перезагружаем данные
+                loadBlockchain();
+            } catch (error) {
+                console.error('Ошибка восстановления:', error);
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBlockchain();
+        });
+    </script>
+</body>
+</html> 
