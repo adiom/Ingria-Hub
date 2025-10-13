@@ -129,7 +129,7 @@ async def handle_message(message: Message):
                         response_text = result.get('response', 'Нет ответа от Ingria.')
                         # Разбить длинный ответ на части по 4000 символов и отправлять с parse_mode="Markdown"
                         for chunk in [response_text[i:i+4000] for i in range(0, len(response_text), 4000)]:
-                            await message.answer(chunk, parse_mode="Markdown")
+                            await message.answer(chunk)
                     except Exception as e:
                         await message.answer(f"Ошибка парсинга JSON: {e}\n{text}")
                 else:
