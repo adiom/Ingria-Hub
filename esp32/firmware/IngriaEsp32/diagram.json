@@ -1,0 +1,75 @@
+{
+  "version": 1,
+  "author": "Ingria Hub",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-lcd1602",
+      "id": "lcd1",
+      "top": -120,
+      "left": -15,
+      "attrs": {
+        "pins": "i2c",
+        "i2cAddress": "0x27"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnTest",
+      "top": 130,
+      "left": -150,
+      "attrs": {
+        "color": "green",
+        "label": "Test",
+        "key": "1",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnStatus",
+      "top": 130,
+      "left": -20,
+      "attrs": {
+        "color": "blue",
+        "label": "Status",
+        "key": "2",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnContext",
+      "top": 130,
+      "left": 110,
+      "attrs": {
+        "color": "red",
+        "label": "Context",
+        "key": "3",
+        "bounce": "0"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:TX", "$serialMonitor:RX", "", []],
+    ["esp:RX", "$serialMonitor:TX", "", []],
+    ["esp:GND.1", "lcd1:GND", "black", []],
+    ["esp:VIN", "lcd1:VCC", "red", []],
+    ["esp:21", "lcd1:SDA", "green", []],
+    ["esp:22", "lcd1:SCL", "blue", []],
+    ["btnTest:1.l", "esp:GND.1", "black", []],
+    ["btnTest:2.l", "esp:25", "green", []],
+    ["btnStatus:1.l", "esp:GND.1", "black", []],
+    ["btnStatus:2.l", "esp:26", "green", []],
+    ["btnContext:1.l", "esp:GND.1", "black", []],
+    ["btnContext:2.l", "esp:27", "green", []]
+  ],
+  "dependencies": {}
+}
