@@ -3,15 +3,24 @@
 Скрипт для проверки воспоминаний в базе данных
 """
 
+import os
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from db import Memory, IngriaRequest
 from memory_service import MemoryService
 
+load_dotenv()
+
 def check_memories():
     """Проверяет воспоминания в базе данных"""
-    
-    DATABASE_URL = "postgresql+psycopg2://ingria_user:tyutyikh6tRFH@10.0.0.105:5432/ingria_hub"
+
+    DATABASE_URL = os.getenv("DATABASE_URL")
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is not set. Add it to the .env file.")
+
     engine = create_engine(DATABASE_URL)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     
